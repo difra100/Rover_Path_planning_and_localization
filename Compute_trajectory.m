@@ -5,11 +5,17 @@ function [q_time, velocity_t, theta_t, theta_d_t, time, pixels] = Compute_trajec
     theta_t = [init_theta;q_start(3)];
     pixels = [init_pixels;get_pixels_coords(q_start(1), q_start(2))];
 
-    error = sqrt((q_end(1)-q_start(1))^2 + (q_end(2)-q_start(2))^2);
-    Kv = 20*10^(-2)/error; % The constraint will not be violated.
-    c = 0
-    d = 0
-    while vpa(norm([q_current(1);q_current(2)]-[q_end(1); q_end(2)]),4) > 100
+
+    c = 0;
+    d = 0;
+    while vpa(norm([q_current(1);q_current(2)]-[q_end(1); q_end(2)]),4) > 160  % meters to stop
+        error = sqrt((q_end(1)-q_current(1))^2 + (q_end(2)-q_current(2))^2);
+        Kv = 15*10^(-2)/error; % The constraint will not be violated.       
+
+        if vpa(norm([q_current(1);q_current(2)]-[q_end(1); q_end(2)]),4) < 200
+            Kv = Kv/100;
+        end
+
         [v, gamma] = Rover_commands(q_end, q_current, Kv, Kh); % The velocity is only feedback driven, thus it will be the maximum when it is at the begininning.
         velocity_t = [velocity_t; v];
 
@@ -32,7 +38,7 @@ function [q_time, velocity_t, theta_t, theta_d_t, time, pixels] = Compute_trajec
             c = 0;
         end
 
-        if d == 5000 || d == 0
+        if d == 10000 || d == 0
             plot_trajectory(map, q_time, limits)
             d = 0;
 

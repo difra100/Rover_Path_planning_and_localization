@@ -19,10 +19,15 @@ init;
 % avoid the shadowed regions.
 % - Trajectory, Velocity, Theta, Theta_dot, Total_time
 
-Pv = [-1.5*10^4; -10^4];
-Pv = [Pv; atan2(-10^4 + 2815, -1.5*10^4 + 23225)];
+Pv1 = [-1.85*10^4; -7500];
+Pv1 = [Pv1; atan2(-7500 + 2815, -1.85*10^4 + 23225)];
 
-P1 = [P1; atan2(P1(2)-Pv(2), P1(1)-Pv(1))]
+Pv2 = [-1.47*10^4; -9300];
+Pv2 = [Pv2; atan2(-9300 + 7500, -1.47*10^4 + 1.85*10^4)];
+
+
+P1 = [P1; atan2(P1(2)-Pv2(2), P1(1)-Pv2(1))];
+
 limits = [Xvec; Yvec];
 init_q = [P0(1:2)'];
 init_vel = [];
@@ -32,33 +37,47 @@ init_time = 0;
 
 init_pixels = [get_pixels_coords(P0(1), P0(2))];
 
-[q_time1, velocity_t1, theta_t1, theta_d_t1, time1, pixels1] = Compute_trajectory(P0, Pv, Kh, L, map, limits, init_q, init_vel, init_theta, init_theta_d, init_time, init_pixels);
+[q_time1, velocity_t1, theta_t1, theta_d_t1, time1, pixels1] = Compute_trajectory(P0, Pv1, Kh, L, map, limits, init_q, init_vel, init_theta, init_theta_d, init_time, init_pixels);
 
-[q_time, velocity_t, theta_t, theta_d_t, time, pixels] = Compute_trajectory(Pv, P1, Kh, L, map, limits, q_time1, velocity_t1, theta_t1, theta_d_t1, time1, pixels1);
+[q_time2, velocity_t2, theta_t2, theta_d_t2, time2, pixels2] = Compute_trajectory(Pv1, Pv2, Kh, L, map, limits, q_time1, velocity_t1, theta_t1, theta_d_t1, time1, pixels1);
 
-
-
-
-%%
-%%% Map of the environment
-% figure()
-% imshow(map,'XData',Xvec,'YData',Yvec);
-% set(gca,'Ydir','normal')
-% axis on
-% grid on
-% xlabel('X')
-% ylabel('Y')
-% hold on 
+[q_time, velocity_t, theta_t, theta_d_t, time, pixels] = Compute_trajectory(Pv2, P1, Kh, L, map, limits, q_time2, velocity_t2, theta_t2, theta_d_t2, time2, pixels2);
 
 
-%%
-%%% Obstacle map
-%%% NOTE: this is the map to be used for the path planning task by using
-%%%       the A* algorithm
-% figure();
-% imshow(obstacleMap,'XData',Xvec,'YData',Yvec);
-% hold on
-% set(gca,'Ydir','normal')
+figure
+plot((0:1:size(q_time,1)),q_time(:, 1),'r',(0:1:size(q_time,1)),q_time(:, 2))
+title('Positions')
+
+figure
+plot((0:1:size(velocity_t,1))-1,velocity_t, 'r')
+title('Driving velocity')
+
+figure
+plot((0:1:size(theta_t,1)-1),theta_t, 'r', (0:1:size(theta_d_t,1)-1),theta_d_t)
+title('Heading angle vs heading angle velocity')
+
+disp('Time was: \n')
+disp(time)
+%
+%% Map of the environment
+figure()
+imshow(map,'XData',Xvec,'YData',Yvec);
+set(gca,'Ydir','normal')
+axis on
+grid on
+xlabel('X')
+ylabel('Y')
+hold on 
+
+
+%
+%% Obstacle map
+%% NOTE: this is the map to be used for the path planning task by using
+%%       the A* algorithm
+figure();
+imshow(obstacleMap,'XData',Xvec,'YData',Yvec);
+hold on
+set(gca,'Ydir','normal')
 
 
 %%
