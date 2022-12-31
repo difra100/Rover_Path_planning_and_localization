@@ -37,29 +37,40 @@ init_time = 0;
 
 init_pixels = [get_pixels_coords(P0(1), P0(2))];
 
-[q_time1, velocity_t1, theta_t1, theta_d_t1, time1, pixels1] = Compute_trajectory(P0, Pv1, Kh, L, map, limits, init_q, init_vel, init_theta, init_theta_d, init_time, init_pixels);
+inter_pixels = [get_pixels_coords(P1(1), P1(2))]
+goal_pixels = [get_pixels_coords(P1(1), P1(2))]
+% goal_pixels(1) = goal_pixels(1)-100
+% goal_pixels(2) = goal_pixels(2)+100
+goal_pixels = [get_pixels_coords(Pf(1), Pf(2))]
 
-[q_time2, velocity_t2, theta_t2, theta_d_t2, time2, pixels2] = Compute_trajectory(Pv1, Pv2, Kh, L, map, limits, q_time1, velocity_t1, theta_t1, theta_d_t1, time1, pixels1);
 
-[q_time, velocity_t, theta_t, theta_d_t, time, pixels] = Compute_trajectory(Pv2, P1, Kh, L, map, limits, q_time2, velocity_t2, theta_t2, theta_d_t2, time2, pixels2);
+path = A_star(inter_pixels', goal_pixels', obstacleMap);
 
+plot_trajectory(obstacleMap, path, Xvec, Yvec)
+% 
+% [q_time1, velocity_t1, theta_t1, theta_d_t1, time1, pixels1] = Compute_trajectory(P0, Pv1, Kh, L, map, limits, init_q, init_vel, init_theta, init_theta_d, init_time, init_pixels);
+% 
+% [q_time2, velocity_t2, theta_t2, theta_d_t2, time2, pixels2] = Compute_trajectory(Pv1, Pv2, Kh, L, map, limits, q_time1, velocity_t1, theta_t1, theta_d_t1, time1, pixels1);
+% 
+% [q_time, velocity_t, theta_t, theta_d_t, time, pixels] = Compute_trajectory(Pv2, P1, Kh, L, map, limits, q_time2, velocity_t2, theta_t2, theta_d_t2, time2, pixels2);
+% 
 
-figure
-plot((0:1:size(q_time,1)),q_time(:, 1),'r',(0:1:size(q_time,1)),q_time(:, 2))
-title('Positions')
-
-figure
-plot((0:1:size(velocity_t,1))-1,velocity_t, 'r')
-title('Driving velocity')
-
-figure
-plot((0:1:size(theta_t,1)-1),theta_t, 'r', (0:1:size(theta_d_t,1)-1),theta_d_t)
-title('Heading angle vs heading angle velocity')
-
-disp('Time was: \n')
-disp(time)
-%
-%% Map of the environment
+% figure
+% plot((0:1:size(q_time,1)),q_time(:, 1),'r',(0:1:size(q_time,1)),q_time(:, 2))
+% title('Positions')
+% 
+% figure
+% plot((0:1:size(velocity_t,1))-1,velocity_t, 'r')
+% title('Driving velocity')
+% 
+% figure
+% plot((0:1:size(theta_t,1)-1),theta_t, 'r', (0:1:size(theta_d_t,1)-1),theta_d_t)
+% title('Heading angle vs heading angle velocity')
+% 
+% disp('Time was: \n')
+% disp(time)
+% %
+% %% Map of the environment
 figure()
 imshow(map,'XData',Xvec,'YData',Yvec);
 set(gca,'Ydir','normal')
@@ -68,37 +79,38 @@ grid on
 xlabel('X')
 ylabel('Y')
 hold on 
-
-
-%
-%% Obstacle map
-%% NOTE: this is the map to be used for the path planning task by using
-%%       the A* algorithm
-figure();
-imshow(obstacleMap,'XData',Xvec,'YData',Yvec);
-hold on
-set(gca,'Ydir','normal')
-
-
-%%
-%%% Landmarks
-figure()
-imshow(map,'XData',Xvec,'YData',Yvec);
-set(gca,'Ydir','normal')
-hold on
-plot(xLM,yLM,'yo','markersize',5,'linewidth',2)
-
-
-%%
-%%% For the Optional Task
-% figure()
-% imshow(map,'XData',Xvec,'YData',Yvec)
+plot(path(:,1), path(:,2), 'yo','markersize',5,'linewidth',2)
+% 
+% 
+% %
+% %% Obstacle map
+% %% NOTE: this is the map to be used for the path planning task by using
+% %%       the A* algorithm
+% figure();
+% imshow(map,'XData',Xvec,'YData',Yvec);
 % hold on
-% image(demCrop, 'AlphaData', 0.6, 'CDataMapping','scaled','XData',Xvec,'YData',Yvec);
-% colormap('parula');
 % set(gca,'Ydir','normal')
-% colorbar
-% axis on
+% 
+% % 
+% % %%
+% %%% Landmarks
+% figure()
+% imshow(map,'XData',Xvec,'YData',Yvec);
+% set(gca,'Ydir','normal')
+% hold on
+% plot(xLM, yLM, 'yo','markersize',5,'linewidth',2)
 
-% NOTE: the values reported in the colorbar are in the unit of meters.
+% 
+% %%
+% %%% For the Optional Task
+% % figure()
+% % imshow(map,'XData',Xvec,'YData',Yvec)
+% % hold on
+% % image(demCrop, 'AlphaData', 0.6, 'CDataMapping','scaled','XData',Xvec,'YData',Yvec);
+% % colormap('parula');
+% % set(gca,'Ydir','normal')
+% % colorbar
+% % axis on
+% 
+% % NOTE: the values reported in the colorbar are in the unit of meters.
 

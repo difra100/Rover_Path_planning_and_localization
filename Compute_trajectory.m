@@ -39,6 +39,7 @@ function [q_time, velocity_t, theta_t, theta_d_t, time, pixels] = Compute_trajec
         end
 
         if d == 10000 || d == 0
+            disp(q_time)
             plot_trajectory(map, q_time, limits)
             d = 0;
 
