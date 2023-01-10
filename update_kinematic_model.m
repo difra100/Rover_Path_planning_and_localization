@@ -1,13 +1,13 @@
-function [new_configuration, variation, int_time] = update_kinematic_model(q_act, commands, L)
+function [new_configuration, variation] = update_kinematic_model(q_act, commands, L, t_span)
     % INPUTs: q_act: Actual configuration vector, commands:
     % Velocity+Steering angle commands, L: Axles distance
     % OUTPUT: new_configuration: New configuration vector.
 
-    variation = get_discrete_var(q_act, commands, L)';
-    space = sqrt(variation(1)^2 + variation(2)^2);
-    int_time = space/commands(1); % Time that is passed during the state transition.
-    new_configuration = q_act + variation;
+    variation = get_discrete_var(q_act, commands, L)'; % Time that is passed during the state transition.
 
+    [t,new_configuration] = ode45(@(t,new_configuration) variation, t_span, q_act);
+    
+    new_configuration = new_configuration(end,:)';
 
 end
 

@@ -20,6 +20,7 @@ classdef Node
             dy = abs(obj.pixels(2)-goal.pixels(2));
 
             h = max(dx, dy) + (sqrt(2)-1)*min(dx,dy);
+%               h = sqrt((obj.pixels(1)-goal.pixels(1))^2 + (obj.pixels(1)-goal.pixels(1))^2);
         end
     end
 end
