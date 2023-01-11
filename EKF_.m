@@ -35,6 +35,7 @@ function [q, P] = EKF_(q_est, P_est, xLM, yLM, instr_var_noise, instr_noise, max
 
     std_vec = repmat(instr_noise,size(visible_landmarks,1),1);
     noise_vec = randn(size(std_vec,1),1).*std_vec;
+    
 
     z = h + noise_vec; % Stack multiple noise vectors.
     

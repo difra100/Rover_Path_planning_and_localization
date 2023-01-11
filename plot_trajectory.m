@@ -1,4 +1,4 @@
-function [none] = plot_trajectory(map, configurations, limits)
+function [none] = plot_trajectory(map, configurations, limits, color)
     figure()
     Xvec = limits(1,:);
     Yvec = limits(2,:);
@@ -9,4 +9,4 @@ function [none] = plot_trajectory(map, configurations, limits)
     xlabel('X')
     ylabel('Y')
     hold on 
-    plot(configurations(:,1), configurations(:,2), 'yo','markersize',5,'linewidth',2)
+    plot(configurations(:,1), configurations(:,2), color,'markersize',5,'linewidth',2)

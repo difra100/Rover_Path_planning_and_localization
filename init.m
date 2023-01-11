@@ -20,7 +20,7 @@ sampling_time = 1/freq;
 
 % ODOMETRIC noise
 sigma_d = 0.005; % [m] noise on the travelled distance
-sigma_theta = 0; %(0.05*pi)/180; % [rad] noise on the heading angle
+sigma_theta = (0.05*pi)/180; % [rad] noise on the heading angle
 od_noise_matrix = [sigma_d^2 0;
                 0 sigma_theta^2];
 

@@ -1,4 +1,4 @@
-function [q_time, velocity_t, theta_t, theta_d_t, time, num_next] = Compute_trajectory(q_start, q_end, Kh, L, map, limits, init_q, velocity_t, init_theta, theta_d_t, time, num)
+function [q_time, velocity_t, theta_t, theta_d_t, time, num_next] = Compute_trajectory(q_start, q_end, Kh, L, map, limits, init_q, velocity_t, init_theta, theta_d_t, time, num, rate)
 
     q_current = q_start;
     q_time = init_q;
@@ -6,7 +6,7 @@ function [q_time, velocity_t, theta_t, theta_d_t, time, num_next] = Compute_traj
     theta_t = init_theta;
     theta_t(num) = q_start(3);
     
-    rate = 10; % 10 hz is the sampling time
+    
     sampling_time = 1/rate;
 
     d = 0;

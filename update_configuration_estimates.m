@@ -6,14 +6,12 @@ function [q, P] = update_configuration_estimates(q_old, P_old, commands, rate, n
     % OUTPUTs: q: Next configuration after the update, P: New configuration
     % of the co-variance matrix.
 
-    sampling_time = 1/rate;
-    delta_d = sampling_time*commands(1); % travelled distance
-    delta_theta = sampling_time*commands(2); % heading angle change
+    delta_d = commands(1); % travelled distance
+    delta_theta = commands(2); % heading angle change
     dist_noise = sqrt(noise(1,1));
 
     orient_noise = sqrt(noise(2,2));
 
-    % Partial derivatives
 
     % Jacobian of the configurations
     Fq = [1 0 -delta_d*sin(q_old(3));
@@ -24,17 +22,21 @@ function [q, P] = update_configuration_estimates(q_old, P_old, commands, rate, n
     Fv = [cos(q_old(3)) 0;
           sin(q_old(3)) 0;
                     0 1];
-
     q = zeros(size(q_old));
 
     %  'Integration step': Estimate of the configurations 
 %     disp((delta_d+dist_noise)*cos(q_old(3,:)));
 %     disp((delta_d+dist_noise)*sin(q_old(3,:)));
 %     disp(delta_theta + orient_noise);
-    q(1,:) = q_old(1,:) + (delta_d + randn(1)*dist_noise)*cos(q_old(3,:));
-    q(2,:) = q_old(2,:) + (delta_d + randn(1)*dist_noise)*sin(q_old(3,:));
-    q(3,:) = q_old(3,:) + delta_theta + randn(1)*orient_noise;
+    cart_noise = randn(1);
+    or_noise = randn(1);
+    q(1,:) = q_old(1,:) + (delta_d + cart_noise*dist_noise)*cos(q_old(3,:));
+    q(2,:) = q_old(2,:) + (delta_d + cart_noise*dist_noise)*sin(q_old(3,:));
+    q(3,:) = q_old(3,:) + delta_theta + or_noise*orient_noise;
     
+    
+    
+
 %     noise
 %     size(Fv)
 %     size(P_old)
