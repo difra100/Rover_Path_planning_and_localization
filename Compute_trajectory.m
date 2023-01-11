@@ -10,11 +10,11 @@ function [q_time, velocity_t, theta_t, theta_d_t, time, num_next] = Compute_traj
     sampling_time = 1/rate;
 
     d = 0;
-    
+    error = sqrt((q_end(1)-q_current(1))^2 + (q_end(2)-q_current(2))^2);
+    Kv = 20*10^(-2)/error;
     while vpa(norm([q_current(1);q_current(2)]-[q_end(1); q_end(2)]),4) > 5  % meters to stop
         old_value = vpa(norm([q_current(1);q_current(2)]-[q_end(1); q_end(2)]),4);
-        error = sqrt((q_end(1)-q_current(1))^2 + (q_end(2)-q_current(2))^2);
-        Kv = 19*10^(-2)/error;
+        
 
 
         [v, gamma] = Rover_commands(q_end, q_current, Kv, Kh); % The velocity is only feedback driven, thus it will be the maximum when it is at the begininning.

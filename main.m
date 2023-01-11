@@ -29,13 +29,16 @@ Pv2 = [Pv2; atan2(-9300 + 7500, -1.47*10^4 + 1.85*10^4)];
 P1 = [P1; atan2(P1(2)-Pv2(2), P1(1)-Pv2(1))];
 
 limits = [Xvec; Yvec];
-q_time2 =  zeros(60000000, 2); %[P0(1:2)'];
+init_q =  zeros(60000000, 2); %[P0(1:2)'];
 
-velocity_t2 = zeros(60000000, 1);
-theta_t2 = zeros(60000000, 1);       %[P0(3)];
+init_theta = zeros(60000000, 1);      %[P0(3)];
+init_theta_d = zeros(60000000, 1);
 
-theta_d_t2 = zeros(600000000, 1);
-time2 = 0;
+init_vel = zeros(60000000, 1);
+init_time = 0;
+
+covar_det = zeros(60000000,1);
+
 
 % init_pixels = [get_pixels_coords(P0(1), P0(2))];
 
@@ -48,89 +51,102 @@ obs_pixels = [get_pixels_coords(PO(1), PO(2))]
 goal_pixels = [get_pixels_coords(Pf(1), Pf(2))]
 % % 
 % % 
+
+
+
+%% TASK 1: from P0 to P1
+% 
+% [q_time1, velocity_t1, theta_t1, theta_d_t1, time1, num1] = Compute_trajectory(P0, Pv1, Kh, L, map, limits, init_q, init_vel, init_theta, init_theta_d, init_time, 1);
+% 
+% [q_time2, velocity_t2, theta_t2, theta_d_t2, time2, num2] = Compute_trajectory(Pv1, Pv2, Kh, L, map, limits, q_time1, velocity_t1, theta_t1, theta_d_t1, time1, num1);
+% 
+% [q_time, velocity_t, theta_t, theta_d_t, time, num3] = Compute_trajectory(Pv2, P1, Kh, L, map, limits, q_time2, velocity_t2, theta_t2, theta_d_t2, time2, num2);
+% 
+
+%% TASK 2: from P1 to Pf
+
 slope = alpha;  % or zero
+
 % path = A_star(inter_pixels', goal_pixels', obstacleMap, limits, demCrop, slope);
 % 
 % plot_trajectory(map, path, limits)
 
-% [q_time1, velocity_t1, theta_t1, theta_d_t1, time1, num1] = Compute_trajectory(P0, Pv1, Kh, L, map, limits, init_q, init_vel, init_theta, init_theta_d, init_time, 1);
-% 
+%% TASK 3: Localization with only Odometric measures, and with the help of the kalman filter.
 
- %d = load('-mat', 'P0_Pv1_confs.dat')
+velocities = load('-mat', './task1_vector/P0_P1_vels.dat');
 
-% times = load("./task1_vector/P0_Pv1_times.dat")
-% time1 = time(:,1)
-% num1 = time(:,2)
- 
-% velocity_t1 = load("./task1_vector/P0_Pv1_vels.dat")
-% 
-% theta_t1 = load("./task1_vector/P0_Pv1_theta.dat")
-% theta_d_t1 = load("./task1_vector/P0_Pv1_thetad.dat")
-% q_time1 = load("./task1_vector/P0_Pv1_confs.dat")
+theta_d = load('-mat', './task1_vector/P0_P1_thetad.dat');
 
 
-%[q_time2, velocity_t2, theta_t2, theta_d_t2, time2, num2] = Compute_trajectory(Pv1, Pv2, Kh, L, map, limits, q_time1, velocity_t1, theta_t1, theta_d_t1, time1, 1);
-% 
-[q_time, velocity_t, theta_t, theta_d_t, time, num3] = Compute_trajectory(Pv2, P1, Kh, L, map, limits, q_time2, velocity_t2, theta_t2, theta_d_t2, time2, 1);
+numbers = load('-mat', './task1_vector/P0_P1_numbers.dat');
+numbers = numbers.numbers;
 
 
-% figure
-% plot((0:1:size(q_time,1)),q_time(:, 1),'r',(0:1:size(q_time,1)),q_time(:, 2))
-% title('Positions')
+init_vel = velocities.v(1:numbers(1),:);
+
+velocity_t1 = velocities.v(numbers(1)+1:numbers(2),:);
+
+velocity_t2 = velocities.v(numbers(2)+1:numbers(3), :);
+
+init_theta_d = theta_d.td(1:numbers(1),:);
+
+theta_d_t1 = theta_d.td(numbers(1):numbers(2),:);
+
+theta_d_t2 = theta_d.td(numbers(2):numbers(3)-1, :);
+
+
+kalman = 1;
+
+[q_time1, theta_t1, time1, P_current1, covar_det1, counter] = Localization_trajectory(P0, Pv1, covariance_init, covar_det, od_noise_matrix, Kh, L, map, limits, init_q, init_vel, init_theta, init_theta_d, init_time, xLM, yLM, instr_noise_var_matrix, instr_noise, maximum_dist, kalman, 1);
 % 
-% figure
-% plot((0:1:size(velocity_t,1))-1,velocity_t, 'r')
-% title('Driving velocity')
+[q_time2, theta_t2, time2, P_current2, covar_det2, counter] = Localization_trajectory([q_time1(counter,:)'; theta_t1(counter)], Pv2, P_current1, covar_det1, od_noise_matrix, Kh, L, map, limits, q_time1, velocity_t1, theta_t1, theta_d_t1, time1, xLM, yLM, instr_noise_var_matrix, instr_noise, maximum_dist, kalman, counter);
 % 
-% figure
-% plot((0:1:size(theta_t,1)-1),theta_t, 'r', (0:1:size(theta_d_t,1)-1),theta_d_t)
-% title('Heading angle vs heading angle velocity')
+[q_time, theta_t, time, P_current3, covar_det, counter] = Localization_trajectory([q_time2(counter,:)'; theta_t2(counter)], P1, P_current2, covar_det2, od_noise_matrix, Kh, L, map, limits, q_time2, velocity_t2, theta_t2, theta_d_t2, time2, xLM, yLM, instr_noise_var_matrix, instr_noise, maximum_dist, kalman, counter);
 % 
-% disp('Time was: \n')
-% disp(time)
-% %
+plot_trajectory(map, q_time(1:counter, :), limits)
+
 %% Map of the environment
-figure()
-imshow(map,'XData',Xvec,'YData',Yvec);
-set(gca,'Ydir','normal')
-axis on
-grid on
-xlabel('X')
-ylabel('Y')
-hold on 
-% plot(path(:,1), path(:,2), 'yo','markersize',5,'linewidth',2)
-
-
-%
-%% Obstacle map
-%% NOTE: this is the map to be used for the path planning task by using
-%%       the A* algorithm
-figure();
-imshow(obstacleMap,'XData',Xvec,'YData',Yvec);
-hold on
-set(gca,'Ydir','normal')
-axis on
-grid on
+% figure()
+% imshow(map,'XData',Xvec,'YData',Yvec);
+% set(gca,'Ydir','normal')
+% axis on
+% grid on
+% xlabel('X')
+% ylabel('Y')
+% hold on 
+% % plot(path(:,1), path(:,2), 'yo','markersize',5,'linewidth',2)
+% 
+% 
+% %
+% %% Obstacle map
+% %% NOTE: this is the map to be used for the path planning task by using
+% %%       the A* algorithm
+% figure();
+% imshow(obstacleMap,'XData',Xvec,'YData',Yvec);
+% hold on
+% set(gca,'Ydir','normal')
+% axis on
+% grid on
+% % 
+% % %%
+% %%% Landmarks
+% figure()
+% imshow(map,'XData',Xvec,'YData',Yvec);
+% set(gca,'Ydir','normal')
+% hold on
+% plot(xLM, yLM, 'yo','markersize',5,'linewidth',2)
+% 
 % 
 % %%
-%%% Landmarks
-figure()
-imshow(map,'XData',Xvec,'YData',Yvec);
-set(gca,'Ydir','normal')
-hold on
-plot(xLM, yLM, 'yo','markersize',5,'linewidth',2)
-
-
-%%
-%%% For the Optional Task
-figure()
-imshow(map,'XData',Xvec,'YData',Yvec)
-hold on
-image(demCrop, 'AlphaData', 0.6, 'CDataMapping','scaled','XData',Xvec,'YData',Yvec);
-colormap('parula');
-set(gca,'Ydir','normal')
-colorbar
-axis on
+% %%% For the Optional Task
+% figure()
+% imshow(map,'XData',Xvec,'YData',Yvec)
+% hold on
+% image(demCrop, 'AlphaData', 0.6, 'CDataMapping','scaled','XData',Xvec,'YData',Yvec);
+% colormap('parula');
+% set(gca,'Ydir','normal')
+% colorbar
+% axis on
 
 % NOTE: the values reported in the colorbar are in the unit of meters.
 % 

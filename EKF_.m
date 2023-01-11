@@ -8,6 +8,7 @@ function [q, P] = EKF_(q_est, P_est, xLM, yLM, instr_var_noise, instr_noise, max
     visible_landmarks = landmarks(des_indices, :);
     
     if size(visible_landmarks,1) == 0
+
         % If no landmarks are visible it is no possible to deploy the
         % kalman filter.
         q = q_est;
@@ -32,13 +33,15 @@ function [q, P] = EKF_(q_est, P_est, xLM, yLM, instr_var_noise, instr_noise, max
     end
 
 
+    std_vec = repmat(instr_noise,size(visible_landmarks,1),1);
+    noise_vec = randn(size(std_vec,1),1).*std_vec;
 
-    noise_vec = instr_noise;
-    z = h + repmat(noise_vec, size(visible_landmarks,1),1); % Stack multiple noise vectors.
+    z = h + noise_vec; % Stack multiple noise vectors.
     
     K = P_est*H'/(H*P_est*H' + Hw*instr_var_noise*Hw'); % Kalman gain matrix
 
     q = q_est + K*(z-h);
+  
     P = (eye(size(q_est,1)) - K*H)*P_est;
 
 end
