@@ -15,7 +15,7 @@ alpha = 15; % Maximum traversable slope
 
 %% Task 3 variables:
 
-freq = 10;
+freq = 1;
 sampling_time = 1/freq;
 
 % ODOMETRIC noise

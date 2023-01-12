@@ -32,7 +32,7 @@ function [q, P] = update_configuration_estimates(q_old, P_old, commands, rate, n
     or_noise = randn(1);
     q(1,:) = q_old(1,:) + (delta_d + cart_noise*dist_noise)*cos(q_old(3,:));
     q(2,:) = q_old(2,:) + (delta_d + cart_noise*dist_noise)*sin(q_old(3,:));
-    q(3,:) = q_old(3,:) + delta_theta + or_noise*orient_noise;
+    q(3,:) = q_old(3,:) + delta_theta + or_noise*orient_noise; %
     
     
     

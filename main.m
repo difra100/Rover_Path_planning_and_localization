@@ -61,7 +61,7 @@ goal_pixels = [get_pixels_coords(Pf(1), Pf(2))]
 % [q_time2, velocity_t2, theta_t2, theta_d_t2, time2, num2] = Compute_trajectory(Pv1, Pv2, Kh, L, map, limits, q_time1, velocity_t1, theta_t1, theta_d_t1, time1, num1, freq);
 % 
 % [q_time, velocity_t, theta_t, theta_d_t, time, num3] = Compute_trajectory(Pv2, P1, Kh, L, map, limits, q_time2, velocity_t2, theta_t2, theta_d_t2, time2, num2, freq);
-
+% 
 
 %% TASK 2: from P1 to Pf
 
@@ -72,11 +72,11 @@ slope = alpha;  % or zero
 % plot_trajectory(map, path, limits)
 
 %% TASK 3: Localization with only Odometric measures, and with the help of the kalman filter.
-
+% 
 qs = load('-mat', './task1_vector/P0_P1_confs.dat');
 
 thetas = load('-mat', './task1_vector/P0_P1_theta.dat');
-
+% 
 
 numbers = load('-mat', './task1_vector/P0_P1_numbers.dat');
 numbers = numbers.numbers;
@@ -107,16 +107,26 @@ old_theta2 = thetas.t(numbers(1)+1:numbers(2),:);
 old_theta3 = thetas.t(numbers(2)+1:numbers(3), :);
 
 
-kalman = 1;
+kalman = 0;  % Employ the kalman engine
+P_cell = cell(1, 6000000);
+P_cell{1} = covariance_init;
+[q_time1, theta_t1, time1, P_current1, covar_det1, P_cell, counter] = Localization_trajectory(P0, Pv1, covariance_init, P_cell, covar_det, od_noise_matrix, map, limits, init_q, old_q, init_theta, old_theta, init_time, xLM, yLM, instr_noise_var_matrix, instr_noise, maximum_dist, kalman, 1);
+% 
+[q_time2, theta_t2, time2, P_current2, covar_det2, P_cell, counter] = Localization_trajectory([q_time1(counter,1); q_time1(counter,2);theta_t1(counter,:)], Pv2, P_current1, P_cell, covar_det1, od_noise_matrix, map, limits, q_time1, old_q2, theta_t1, old_theta2, time1, xLM, yLM, instr_noise_var_matrix, instr_noise, maximum_dist, kalman, counter);
+% 
+[q_time, theta_t, time, P_current3, covar_det, P_cell, counter] = Localization_trajectory([q_time2(counter,1); q_time2(counter,2); theta_t2(counter,:)], P1, P_current2, P_cell, covar_det2, od_noise_matrix, map, limits, q_time2, old_q3, theta_t2, old_theta3, time2, xLM, yLM, instr_noise_var_matrix, instr_noise, maximum_dist, kalman, counter);
+% 
 
-[q_time1, theta_t1, time1, P_current1, covar_det1, counter] = Localization_trajectory(P0, Pv1, covariance_init, covar_det, od_noise_matrix, map, limits, init_q, old_q, init_theta, old_theta, init_time, xLM, yLM, instr_noise_var_matrix, instr_noise, maximum_dist, kalman, 1);
-% 
-[q_time2, theta_t2, time2, P_current2, covar_det2, counter] = Localization_trajectory([q_time1(counter,:)'; theta_t1(counter)], Pv2, P_current1, covar_det1, od_noise_matrix, map, limits, q_time1, old_q2, theta_t1, old_theta2, time1, xLM, yLM, instr_noise_var_matrix, instr_noise, maximum_dist, kalman, counter);
-% 
-[q_time, theta_t, time, P_current3, covar_det, counter] = Localization_trajectory([q_time2(counter,:)'; theta_t2(counter)], P1, P_current2, covar_det2, od_noise_matrix, map, limits, q_time2, old_q3, theta_t2, old_theta3, time2, xLM, yLM, instr_noise_var_matrix, instr_noise, maximum_dist, kalman, counter);
-% 
-plot_trajectory(map, q_time(2:counter,:), limits, 'c')
 plot_trajectory(map, qs.q, limits, 'm')
+hold on
+plot_trajectory(map, q_time(1:counter,:), limits, 'c')
+hold on
+for i = 1:2000:counter
+    error_ellipse(P_cell{i}(1:2, 1:2), q_time(i,:)');
+    hold on
+end
+
+
 %% Map of the environment
 % figure()
 % imshow(map,'XData',Xvec,'YData',Yvec);

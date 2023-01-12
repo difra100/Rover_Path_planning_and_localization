@@ -10,11 +10,11 @@ function [q_time, velocity_t, theta_t, theta_d_t, time, num_next] = Compute_traj
     sampling_time = 1/rate;
 
     d = 0;
-    error = sqrt((q_end(1)-q_current(1))^2 + (q_end(2)-q_current(2))^2);
-    Kv = 20*10^(-2)/error;
-    while vpa(norm([q_current(1);q_current(2)]-[q_end(1); q_end(2)]),4) > 5  % meters to stop
+    
+    while vpa(norm([q_current(1);q_current(2)]-[q_end(1); q_end(2)]),4) > 1  % meters to stop
         old_value = vpa(norm([q_current(1);q_current(2)]-[q_end(1); q_end(2)]),4);
-        
+        error = sqrt((q_end(1)-q_current(1))^2 + (q_end(2)-q_current(2))^2);
+        Kv = 19.5*10^(-2)/error;
 
 
         [v, gamma] = Rover_commands(q_end, q_current, Kv, Kh); % The velocity is only feedback driven, thus it will be the maximum when it is at the begininning.
@@ -34,6 +34,8 @@ function [q_time, velocity_t, theta_t, theta_d_t, time, num_next] = Compute_traj
         value = vpa(norm([q_current(1);q_current(2)]-[q_end(1); q_end(2)]),4);
 
         if value > old_value
+            disp('Error:')
+            disp(vpa(norm([q_current(1);q_current(2)]-[q_end(1); q_end(2)]),4))
             break
         end
         time = time + sampling_time;
@@ -44,9 +46,10 @@ function [q_time, velocity_t, theta_t, theta_d_t, time, num_next] = Compute_traj
     
         num = num+1;
 
-        if d == 50000 || d == 0
+        if d == 100000 || d == 0
             disp(vpa(norm([q_current(1);q_current(2)]-[q_end(1); q_end(2)]),4))
-            plot_trajectory(map, q_time(1:num+1,:), limits)
+            plot_trajectory(map, q_time(1:num+1,:), limits, 'r')
+            hold on
             d = 0;
 
         end
