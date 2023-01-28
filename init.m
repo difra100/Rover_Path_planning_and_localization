@@ -7,11 +7,11 @@ Pf = [- 18660; 29200];
 %% Task 1 variables:
 syms sv real
 Kv = sv;
-Kh = 0.01;
+Kh = 0.1;
 L = 1.5; % Axles distance
 
 %% Task2 variables
-alpha = 15; % Maximum traversable slope
+alpha = 15*pi/180; % Maximum traversable slope
 
 %% Task 3 variables:
 

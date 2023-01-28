@@ -1,6 +1,6 @@
 
 
-function [path] = A_star(n_start_pixels, n_goal_pixels, mapp, limits, demMap, slope)                                          
+function [path_planned, coords] = A_star(n_start_pixels, n_goal_pixels, mapp, limits, demMap, slope, limited_memory)                                          
     % INPUT: n_start: Starting node, n_goal: Goal node, ObstacleMap (0-255
     % are the obstacles values. Map Dimension : 10001x10001, limits: is the
     % vector with the map points for the plot of the visited nodes.
@@ -17,45 +17,53 @@ function [path] = A_star(n_start_pixels, n_goal_pixels, mapp, limits, demMap, sl
                   0 -1;
                   1 -1;
                   -1 1];
+    path_planned = 0;
+    
+    threshold = 1/0;
     n_start = Node(n_start_pixels);
     n_goal = Node(n_goal_pixels);
-    openSet = containers.Map % Empty Map container to collect the nodes to analyze. Keys are the F values, and the Values are the Node object
+    openSet = containers.Map; % Empty Map container to collect the nodes to analyze. Keys are the F values, and the Values are the Node object
                              % Empty matrices to contain all the path points.
-
     n_start.g = 0;
 
     n_start.h = n_start.get_heuristic_value(n_goal);
+    
+    if limited_memory == true
+        threshold = n_start.h; % This threshold is needed to control the memory usage. 
+    end
+
     n_start.f = n_start.g + n_start.h;
 
     openSet(pixelify(n_start.pixels)) = n_start; % Container has the size (n_elements x 1)
     expanded_nodes = containers.Map;
     expanded_nodes(pixelify(n_start.pixels)) = n_start;
-    visited_nodes = containers.Map;
-    visited_nodes(pixelify(n_start.pixels)) = n_start;
+   
     d = 0; %variable to define the visited nodes
+
     while size(openSet,1) ~= 0
         d = d + 1;
         n_curr = get_lowest_f_node(openSet);
         % check if goal
+
         if sum(n_curr.pixels == n_goal.pixels) == 2
             disp('Solution has been found........')
 
-            path = PathReconstruction(n_curr, n_start);
+            path_planned = PathReconstruction(n_curr, n_start);
             break
         end
 
         % Remove ncurr from openSet
         pix_to_rem = pixelify(n_curr.pixels);
   
-        visited_nodes(pix_to_rem) = n_curr;
         openSet = remove(openSet, pix_to_rem);
         if d == 10000
-           disp(size(openSet))
+           disp('OpenSet size: \n')
+           disp(size(openSet,1))
         end
-        if d == 50000
+        if d == 200000
             
             coords = get_coords_from_container(expanded_nodes);
-            plot_trajectory(mapp, coords, limits)
+            plot_trajectory(mapp, coords, limits, 'yo')
             d = 0;
         end
         
@@ -78,6 +86,7 @@ function [path] = A_star(n_start_pixels, n_goal_pixels, mapp, limits, demMap, sl
                 n_query = Node(new_pix); % Initialize new node object
             end
             if correct == true
+    
                 if abs(sum(curr_conf)) == 2 || abs(sum(curr_conf)) == 0 % Which means that is requested a diagonal motion
                     cost = sqrt(2)*(NN + additional_cost);
                 else
@@ -89,31 +98,24 @@ function [path] = A_star(n_start_pixels, n_goal_pixels, mapp, limits, demMap, sl
                 expanded_nodes(key) = n_curr; % obstacle is expanded
             end
 
-            if g_tentative < n_query.g
+            if g_tentative <= n_query.g
                 n_query.g = g_tentative;
                 n_query.h = n_query.get_heuristic_value(n_goal);
                 n_query.f = n_query.g + n_query.h;  % 10 is a weight that kill the heuristic admissability
                 n_query.prev = n_curr; % This works as a pointer to another object.
                 expanded_nodes(key) = n_curr;
-                if isKey(openSet, key) == false % If the node is not in the list of the TO VISIT nodes, it must be added.
-                
+                if isKey(openSet, key) == false && n_query.h < threshold% If the node is not in the list of the TO VISIT nodes, it must be added.
+                    
                     openSet(key) = n_query;
                     
-                 
                 end
             end
          
-         
-
-
         end
-        
-
     end
-    coords = get_coords_from_container(expanded_nodes)
-    plot_trajectory(mapp, coords, limits)
 
-    
+    coords = get_coords_from_container(expanded_nodes); % Expanded nodes
+    plot_trajectory(mapp, coords, limits, 'yo')
 
 end
 
@@ -159,6 +161,7 @@ function correct = check_candidate_validity(conf, map)
     else
         correct = false;
     end
+    
 
 end
 
@@ -168,19 +171,40 @@ function [correct, additional_cost] = check_candidate_validity_with_slope(conf, 
     % INPUTs: conf: set of new pixel, map: Obstacles map.
     % OUTPUT: True if there are no issues with the evaluation, False
     % otherwise
-    increment = demMap(conf(1),conf(2)) - demMap(old_conf(1), old_conf(2));
 
-    point = map(conf(1),conf(2)); 
-    if point ~= 255 && point ~= 0 && conf(1) <= 10001 && conf(2) <= 10001 && conf(1) > 0 && conf(2) > 0 && increment <= alpha % Conf must be inside the map, and in that map point should not be white or black pixels.
-        correct = true;
-        additional_cost = 5/(alpha-increment); % 5 is the maximum cost
+    
+    if conf(1) <= 10001 && conf(2) <= 10001 && conf(1) > 0 && conf(2) > 0 && conf(2) > 3669 && conf(2) < 7469
+        point = map(conf(1),conf(2)); 
+        curr_conf = conf - old_conf;
+        increment = demMap(conf(1),conf(2)) - demMap(old_conf(1), old_conf(2));
+        
+        if abs(sum(curr_conf)) == 2 || abs(sum(curr_conf)) == 0
+            value = 5*sqrt(2);
+            angle = atan2(increment, value*sqrt(2));
+            
+        else
+            value = 5;
+            angle = atan2(increment, value);
+        end
+        if point ~= 255 && point ~= 0 && angle <= alpha
+            correct = true;
+            additional_cost = sqrt(value^2 + increment^2) - value; % Longest side of the triangle is the additional cost.
+        else
+            correct = false;
+            additional_cost = 0;
+       
+        end
     else
         correct = false;
         additional_cost = 0;
-
+    
     end
-
 end
+    
+   
+        
+       
+   
 
 
 
@@ -221,22 +245,3 @@ function coords = get_coords_from_container(container)
     
 end
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-% 
-% 
-% 

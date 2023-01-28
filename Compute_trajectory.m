@@ -11,12 +11,12 @@ function [q_time, velocity_t, theta_t, theta_d_t, time, num_next] = Compute_traj
 
     d = 0;
     
-    while vpa(norm([q_current(1);q_current(2)]-[q_end(1); q_end(2)]),4) > 1  % meters to stop
-        old_value = vpa(norm([q_current(1);q_current(2)]-[q_end(1); q_end(2)]),4);
+    comp = vpa(norm([q_current(1);q_current(2)]-[q_end(1); q_end(2)]),4);
+    while comp > 1  % meters to stop
         error = sqrt((q_end(1)-q_current(1))^2 + (q_end(2)-q_current(2))^2);
-        Kv = 19.5*10^(-2)/error;
-
-
+        Kv = 19.9*10^(-2)/error;
+        old_value = comp;
+        
         [v, gamma] = Rover_commands(q_end, q_current, Kv, Kh); % The velocity is only feedback driven, thus it will be the maximum when it is at the begininning.
         velocity_t(num) =  v;
 
@@ -26,16 +26,15 @@ function [q_time, velocity_t, theta_t, theta_d_t, time, num_next] = Compute_traj
             disp('aborted')
             break
         end
-        t_span = [time time+sampling_time];
+        t_span = [0 sampling_time];
 
         [q_current, variation] = update_kinematic_model(q_current, commands, L, t_span);
+        
+        comp = vpa(norm([q_current(1);q_current(2)]-[q_end(1); q_end(2)]),4);
 
-
-        value = vpa(norm([q_current(1);q_current(2)]-[q_end(1); q_end(2)]),4);
-
+        value = comp;
         if value > old_value
-            disp('Error:')
-            disp(vpa(norm([q_current(1);q_current(2)]-[q_end(1); q_end(2)]),4))
+            disp('Error')
             break
         end
         time = time + sampling_time;
@@ -47,8 +46,8 @@ function [q_time, velocity_t, theta_t, theta_d_t, time, num_next] = Compute_traj
         num = num+1;
 
         if d == 100000 || d == 0
-            disp(vpa(norm([q_current(1);q_current(2)]-[q_end(1); q_end(2)]),4))
-            plot_trajectory(map, q_time(1:num+1,:), limits, 'r')
+            disp(comp)
+            plot_trajectory(map, q_time(1:num,:), limits, 'r')
             hold on
             d = 0;
 
@@ -56,6 +55,7 @@ function [q_time, velocity_t, theta_t, theta_d_t, time, num_next] = Compute_traj
         d = d + 1;
     end
     num_next = num;
+    comp
 end
 
 
