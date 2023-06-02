@@ -3,11 +3,13 @@
 
 clear
 clc
+
+addpath('src')
 load('exercise.mat')
 init;
 
 
-task = 1 % Choose 1, 2 or 3, according to the defined enumeration.
+task = 3 % Choose 1, 2 or 3, according to the defined enumeration.
 
 
 %% TASK 1
@@ -90,7 +92,7 @@ if task == 3
     numbers = numbers.numbers;
     covar_det = zeros(60000000,1);
     
-    kalman = 0  % 0: only odometry, 1: Employ the kalman engine
+ 
     
     P_cell = cell(1, 6000000);
     P_cell{1} = covariance_init;
